@@ -3,7 +3,10 @@
     "allow": [
       "Bash(ls -la *.json)",
       "Bash(npm install:*)",
-      "Bash(npx husky:*)"
+      "Bash(npx husky:*)",
+      "Bash(grep -n \"Journal\\\\\\\\.shouldOutputAtMainLevel\\\\|Journal\\\\\\\\.ShouldOutputAtMainLevel\" assets/squad/assistants/journal.ts)",
+      "Bash(npx prettier:*)",
+      "Bash(npx eslint:*)"
     ]
   }
 }
