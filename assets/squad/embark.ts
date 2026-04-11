@@ -38,7 +38,3 @@ export function embark(): void {
 export { Squad };
 export { ROSTER };
 export { Journal };
-
-window['embark'] = embark;
-
-window['Journal'] = Journal;
