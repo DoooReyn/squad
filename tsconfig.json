@@ -1,0 +1,29 @@
+{
+  /* Base configuration. Do not edit this field. */
+  "extends": "./temp/tsconfig.cocos.json",
+
+  /* Add your custom configuration here. */
+  "compilerOptions": {
+    "strict": false,
+    "lib": ["DOM", "ES2020"],
+    "ignoreDeprecations": "6.0",
+    // 暂时不生成 .d.ts（游戏项目一般不需要）
+    "declaration": false,
+    // 严格的函数类型检查
+    "strictFunctionTypes": true, 
+    // 函数必须有明确的返回值
+    "noImplicitReturns": true,
+    // switch 语句必须有 break
+    "noFallthroughCasesInSwitch": true, 
+    // 暂时禁用，游戏开发中可能需要
+    "noUncheckedIndexedAccess": false, 
+    // 暂时禁用，避免过于严格
+    "exactOptionalPropertyTypes": false, 
+    // 跳过库文件的类型检查，避免引擎文件错误
+    "skipLibCheck": true, 
+    // 强制文件名大小写一致（跨平台重要）
+    "forceConsistentCasingInFileNames": true,
+    // 路径别名
+    "paths": {}
+  }
+}

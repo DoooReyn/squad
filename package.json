@@ -1,0 +1,34 @@
+{
+  "name": "squad",
+  "uuid": "9268bee6-eb2c-4a59-afe3-583149077d2f",
+  "creator": {
+    "version": "3.8.8"
+  },
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint \"assets/**/*.ts\" --fix",
+    "lint:check": "eslint \"assets/**/*.ts\"",
+    "format": "prettier --write \"assets/**/*.ts\"",
+    "format:check": "prettier --check \"assets/**/*.ts\"",
+    "prepare": "husky"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
+    "@eslint/js": "^10.0.1",
+    "@typescript-eslint/eslint-plugin": "^8.58.1",
+    "@typescript-eslint/parser": "^8.58.1",
+    "eslint": "^10.2.0",
+    "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.2",
+    "typescript-eslint": "^8.58.1"
+  }
+}
