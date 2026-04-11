@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la *.json)",
+      "Bash(npm install:*)",
+      "Bash(npx husky:*)"
+    ]
+  }
+}
