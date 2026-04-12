@@ -11,7 +11,7 @@
  *
  * 按功能模块划分的日志类别。
  */
-export enum LogCategory {
+export enum JournalCategory {
   /** 系统日志 */
   SYSTEM = 'SYSTEM',
   /** 战斗日志 */
@@ -29,7 +29,7 @@ export enum LogCategory {
  *
  * 按重要程度划分的日志级别。
  */
-export enum LogLevel {
+export enum JournalLevel {
   /** 调试信息：开发时使用，生产环境关闭 */
   DEBUG = 'DEBUG',
   /** 一般信息：常规操作记录 */
@@ -43,37 +43,37 @@ export enum LogLevel {
 }
 
 /**
- * 日志实例
+ * 记录专员（记录官下属）
  *
- * 每个 LogCategory 对应一个日志实例，有独立的级别控制。
+ * 每个 JournalCategory 对应一个记录专员，有独立的级别控制。
  */
-class Logger {
+class JournalUnderling {
   /**
    * 日志级别
-   * @description 此日志实例的输出级别，低于此级别的日志不会输出
+   * @description 此记录专员的输出级别，低于此级别的日志不会输出
    */
-  private _level: LogLevel;
+  private _level: JournalLevel;
 
   /**
    * 日志分类
-   * @description 此日志实例所属的分类
+   * @description 此记录专员所属的分类
    */
-  private readonly _category: LogCategory;
+  private readonly _category: string;
 
   /**
    * 构造函数
    * @param category 日志分类
    */
-  constructor(category: LogCategory) {
+  public constructor(category: JournalCategory) {
     this._category = category;
-    this._level = LogLevel.DEBUG;
+    this._level = JournalLevel.DEBUG;
   }
 
   /**
    * 设置日志级别
    * @param level 日志级别
    */
-  public setLevel(level: LogLevel): void {
+  public setLevel(level: JournalLevel): void {
     this._level = level;
   }
 
@@ -81,7 +81,7 @@ class Logger {
    * 获取日志级别
    * @returns 当前日志级别
    */
-  public getLevel(): LogLevel {
+  public getLevel(): JournalLevel {
     return this._level;
   }
 
@@ -91,7 +91,7 @@ class Logger {
    * @param title 日志标题
    * @param data 附加数据（可变参数）
    */
-  public log(level: LogLevel, title: string, ...data: unknown[]): void {
+  public log(level: JournalLevel, title: string, ...data: unknown[]): void {
     // 检查实例级别
     if (!this._shouldOutputAtInstanceLevel(level)) {
       return;
@@ -111,8 +111,8 @@ class Logger {
    * @param level 日志级别
    * @returns 是否应该输出
    */
-  private _shouldOutputAtInstanceLevel(level: LogLevel): boolean {
-    const levels = [LogLevel.DEBUG, LogLevel.INFO, LogLevel.WARN, LogLevel.ERROR, LogLevel.FATAL];
+  private _shouldOutputAtInstanceLevel(level: JournalLevel): boolean {
+    const levels = [JournalLevel.DEBUG, JournalLevel.INFO, JournalLevel.WARN, JournalLevel.ERROR, JournalLevel.FATAL];
     const levelIndex = levels.indexOf(level);
     const minIndex = levels.indexOf(this._level);
     return levelIndex >= minIndex;
@@ -124,7 +124,7 @@ class Logger {
    * @param title 日志标题
    * @param data 附加数据（可变参数）
    */
-  private _outputToConsole(level: LogLevel, title: string, ...data: unknown[]): void {
+  private _outputToConsole(level: JournalLevel, title: string, ...data: unknown[]): void {
     const timestamp = new Date().toLocaleTimeString();
     const header = `[${this._category} | ${level} | ${timestamp}]`;
 
@@ -132,7 +132,7 @@ class Logger {
     const useColor = Journal.ColorOutputEnabled;
 
     switch (level) {
-      case LogLevel.DEBUG:
+      case JournalLevel.DEBUG:
         if (useColor) {
           console.debug(
             `%c${header} %c${title}`,
@@ -144,7 +144,7 @@ class Logger {
           console.debug(header, title, ...data);
         }
         break;
-      case LogLevel.INFO:
+      case JournalLevel.INFO:
         if (useColor) {
           console.info(
             `%c${header} %c${title}`,
@@ -156,7 +156,7 @@ class Logger {
           console.info(header, title, ...data);
         }
         break;
-      case LogLevel.WARN:
+      case JournalLevel.WARN:
         if (useColor) {
           console.warn(
             `%c${header} %c${title}`,
@@ -168,8 +168,8 @@ class Logger {
           console.warn(header, title, ...data);
         }
         break;
-      case LogLevel.ERROR:
-      case LogLevel.FATAL:
+      case JournalLevel.ERROR:
+      case JournalLevel.FATAL:
         if (useColor) {
           console.error(
             `%c${header} %c${title}`,
@@ -190,55 +190,55 @@ class Logger {
    * 调试日志
    */
   public debug(title: string, ...data: unknown[]): void {
-    this.log(LogLevel.DEBUG, title, ...data);
+    this.log(JournalLevel.DEBUG, title, ...data);
   }
 
   /**
    * 信息日志
    */
   public info(title: string, ...data: unknown[]): void {
-    this.log(LogLevel.INFO, title, ...data);
+    this.log(JournalLevel.INFO, title, ...data);
   }
 
   /**
    * 警告日志
    */
   public warn(title: string, ...data: unknown[]): void {
-    this.log(LogLevel.WARN, title, ...data);
+    this.log(JournalLevel.WARN, title, ...data);
   }
 
   /**
    * 错误日志
    */
   public error(title: string, ...data: unknown[]): void {
-    this.log(LogLevel.ERROR, title, ...data);
+    this.log(JournalLevel.ERROR, title, ...data);
   }
 
   /**
    * 致命错误日志
    */
   public fatal(title: string, ...data: unknown[]): void {
-    this.log(LogLevel.FATAL, title, ...data);
+    this.log(JournalLevel.FATAL, title, ...data);
   }
 }
 
 /**
  * 记录官
  *
- * 管理所有日志实例，提供全局控制。
+ * 管理所有记录专员，提供全局控制。
  */
 class Journal {
   /**
-   * 主日志级别
-   * @description 全局最低输出级别，所有日志实例都受此限制
+   * 记录专员实例容器
+   * @description 存储所有记录专员，key 为分类，value 为记录专员实例
    */
-  private static MainLevel: LogLevel = LogLevel.DEBUG;
+  private static Underlings: Map<string, JournalUnderling> = new Map();
 
   /**
-   * 日志实例容器
-   * @description 存储所有日志实例，key 为分类，value 为日志实例
+   * 主日志级别
+   * @description 全局最低输出级别，所有记录专员都受此限制
    */
-  private static Loggers: Map<LogCategory, Logger> = new Map();
+  public static MainLevel: JournalLevel = JournalLevel.DEBUG;
 
   /**
    * 彩色输出启用
@@ -250,54 +250,38 @@ class Journal {
    * 日志级别颜色映射
    * @description 不同级别对应的控制台颜色
    */
-  public static readonly LevelColors: Record<LogLevel, string> = {
-    [LogLevel.DEBUG]: '#888888', // 灰色
-    [LogLevel.INFO]: '#4CAF50', // 绿色
-    [LogLevel.WARN]: '#FF9800', // 橙色
-    [LogLevel.ERROR]: '#F44336', // 红色
-    [LogLevel.FATAL]: '#D32F2F', // 深红色
+  public static readonly LevelColors: Record<JournalLevel, string> = {
+    [JournalLevel.DEBUG]: '#888888', // 灰色
+    [JournalLevel.INFO]: '#4CAF50', // 绿色
+    [JournalLevel.WARN]: '#FF9800', // 橙色
+    [JournalLevel.ERROR]: '#F44336', // 红色
+    [JournalLevel.FATAL]: '#D32F2F', // 深红色
   };
-
-  /**
-   * 设置主日志级别
-   * @param level 主日志级别
-   */
-  public static SetMainLevel(level: LogLevel): void {
-    this.MainLevel = level;
-  }
-
-  /**
-   * 获取主日志级别
-   * @returns 主日志级别
-   */
-  public static GetMainLevel(): LogLevel {
-    return this.MainLevel;
-  }
 
   /**
    * 判断是否应该在主级别输出
    * @param level 日志级别
    * @returns 是否应该输出
    */
-  public static ShouldOutputAtMainLevel(level: LogLevel): boolean {
-    const levels = [LogLevel.DEBUG, LogLevel.INFO, LogLevel.WARN, LogLevel.ERROR, LogLevel.FATAL];
+  public static ShouldOutputAtMainLevel(level: JournalLevel): boolean {
+    const levels = [JournalLevel.DEBUG, JournalLevel.INFO, JournalLevel.WARN, JournalLevel.ERROR, JournalLevel.FATAL];
     const levelIndex = levels.indexOf(level);
     const minIndex = levels.indexOf(this.MainLevel);
     return levelIndex >= minIndex;
   }
 
   /**
-   * 获取日志实例
+   * 获取记录专员
    *
-   * 根据分类获取对应的日志实例，如果不存在则自动创建。
+   * 根据分类获取对应的记录专员，如果不存在则自动创建。
    * @param category 日志分类
-   * @returns 日志实例
+   * @returns 记录专员
    */
-  public static Acquire(category: LogCategory): Logger {
-    if (!this.Loggers.has(category)) {
-      this.Loggers.set(category, new Logger(category));
+  public static Acquire(category: JournalCategory): JournalUnderling {
+    if (!this.Underlings.has(category)) {
+      this.Underlings.set(category, new JournalUnderling(category));
     }
-    return this.Loggers.get(category)!;
+    return this.Underlings.get(category)!;
   }
 
   /**
@@ -305,50 +289,49 @@ class Journal {
    * @param category 日志分类
    * @param level 日志级别
    */
-  public static SetCategoryLevel(category: LogCategory, level: LogLevel): void {
-    const logger = this.Acquire(category);
-    logger.setLevel(level);
+  public static SetCategoryLevel(category: JournalCategory, level: JournalLevel): void {
+    this.Acquire(category).setLevel(level);
   }
 
   // ========== 通用快捷方法（使用 SYSTEM 分类） ==========
 
   /**
-   * 调试日志
+   * 系统调试日志
    */
   public static Debug(title: string, ...data: unknown[]): void {
-    this.Acquire(LogCategory.SYSTEM).debug(title, ...data);
+    this.Acquire(JournalCategory.SYSTEM).debug(title, ...data);
   }
 
   /**
-   * 信息日志
+   * 系统信息日志
    */
   public static Info(title: string, ...data: unknown[]): void {
-    this.Acquire(LogCategory.SYSTEM).info(title, ...data);
+    this.Acquire(JournalCategory.SYSTEM).info(title, ...data);
   }
 
   /**
-   * 警告日志
+   * 系统警告日志
    */
   public static Warn(title: string, ...data: unknown[]): void {
-    this.Acquire(LogCategory.SYSTEM).warn(title, ...data);
+    this.Acquire(JournalCategory.SYSTEM).warn(title, ...data);
   }
 
   /**
-   * 错误日志
+   * 系统错误日志
    */
   public static Error(title: string, ...data: unknown[]): void {
-    this.Acquire(LogCategory.SYSTEM).error(title, ...data);
+    this.Acquire(JournalCategory.SYSTEM).error(title, ...data);
   }
 
   /**
-   * 致命错误日志
+   * 系统致命错误日志
    */
   public static Fatal(title: string, ...data: unknown[]): void {
-    this.Acquire(LogCategory.SYSTEM).fatal(title, ...data);
+    this.Acquire(JournalCategory.SYSTEM).fatal(title, ...data);
   }
 }
 
 /**
- * 导出记录官和日志实例
+ * 导出记录官和记录专员
  */
-export { Journal, Logger };
+export { Journal, JournalUnderling };

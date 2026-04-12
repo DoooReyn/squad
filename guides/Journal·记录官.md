@@ -27,10 +27,10 @@
 
 ```typescript
 // 战斗日志只显示 WARN 及以上
-Journal.SetCategoryLevel(LogCategory.BATTLE, LogLevel.WARN);
+Journal.SetCategoryLevel(JournalCategory.BATTLE, JournalLevel.WARN);
 
 // UI 日志显示 DEBUG 及以上
-Journal.SetCategoryLevel(LogCategory.UI, LogLevel.DEBUG);
+Journal.SetCategoryLevel(JournalCategory.UI, JournalLevel.DEBUG);
 ```
 
 ### 2. 层级过滤
@@ -38,46 +38,46 @@ Journal.SetCategoryLevel(LogCategory.UI, LogLevel.DEBUG);
 两级过滤机制，精确控制输出：
 
 1. **全局级别**（Journal.MainLevel）— 所有日志的最低输出级别
-2. **实例级别**（Logger._level）— 单个分类的输出级别
+2. **实例级别**（JournalUnderling._level）— 单个分类的输出级别
 
 ```typescript
 // 全局只显示 INFO 及以上
-Journal.SetMainLevel(LogLevel.INFO);
+Journal.MainLevel = JournalLevel.INFO;
 
 // 单个分类可以更宽松，但仍受全局限制
-Journal.SetCategoryLevel(LogCategory.BATTLE, LogLevel.DEBUG); // 不会生效，因为全局限制为 INFO
+Journal.SetCategoryLevel(JournalCategory.BATTLE, JournalLevel.DEBUG); // 不会生效，因为全局限制为 INFO
 ```
 
 ### 3. 服务定位器模式
 
-Journal 采用服务定位器模式，通过 `Acquire()` 获取日志实例：
+Journal 采用服务定位器模式，通过 `Acquire()` 获取记录专员：
 
 ```typescript
-// 获取 SYSTEM 分类日志实例
-const systemLog = Journal.Acquire(LogCategory.SYSTEM);
+// 获取 SYSTEM 分类记录专员
+const systemLog = Journal.Acquire(JournalCategory.SYSTEM);
 
 // 每个分类对应一个独立实例，缓存复用
-const sameLog = Journal.Acquire(LogCategory.SYSTEM); // 返回同一实例
+const sameLog = Journal.Acquire(JournalCategory.SYSTEM); // 返回同一实例
 ```
 
 ### 4. 拟人化命名
 
 遵循冒险团主题，采用拟人化命名：
 - **Journal（记录官）** — 全局日志管理者
-- **Logger（记录员）** — 单分类日志实例
-- **LogCategory（记录册）** — 日志分类
-- **LogLevel（重要度）** — 日志级别
+- **JournalUnderling（记录专员）** — 单分类记录专员
+- **JournalCategory（记录册）** — 日志分类
+- **JournalLevel（重要度）** — 日志级别
 
 ---
 
 ## 核心概念
 
-### LogCategory — 日志分类
+### JournalCategory — 日志分类
 
 按功能模块划分的日志类别：
 
 ```typescript
-enum LogCategory {
+enum JournalCategory {
   SYSTEM = 'SYSTEM',   // 系统日志
   BATTLE = 'BATTLE',   // 战斗日志
   UI = 'UI',           // UI 日志
@@ -86,12 +86,12 @@ enum LogCategory {
 }
 ```
 
-### LogLevel — 日志级别
+### JournalLevel — 日志级别
 
 按重要程度划分的日志级别：
 
 ```typescript
-enum LogLevel {
+enum JournalLevel {
   DEBUG = 'DEBUG',   // 调试信息：开发时使用
   INFO = 'INFO',     // 一般信息：常规操作记录
   WARN = 'WARN',     // 警告：潜在问题
@@ -102,18 +102,18 @@ enum LogLevel {
 
 级别优先级：`DEBUG < INFO < WARN < ERROR < FATAL`
 
-### Logger — 记录员
+### JournalUnderling — 记录专员
 
-单分类日志实例，负责具体的日志输出：
+单分类记录专员实例，负责具体的日志输出：
 
 ```typescript
-class Logger {
-  private _level: LogLevel;           // 实例级别
-  private readonly _category: LogCategory; // 所属分类
+class JournalUnderling {
+  private _level: JournalLevel;           // 实例级别
+  private readonly _category: JournalCategory; // 所属分类
 
-  public setLevel(level: LogLevel): void;
-  public getLevel(): LogLevel;
-  public log(level: LogLevel, title: string, ...data: unknown[]): void;
+  public setLevel(level: JournalLevel): void;
+  public getLevel(): JournalLevel;
+  public log(level: JournalLevel, title: string, ...data: unknown[]): void;
 
   // 便捷方法
   public debug(title: string, ...data: unknown[]): void;
@@ -126,24 +126,25 @@ class Logger {
 
 ### Journal — 记录官
 
-全局日志管理器，管理所有 Logger 实例：
+全局日志管理器，管理所有 JournalUnderling 实例：
 
 ```typescript
 class Journal {
-  private static MainLevel: LogLevel;                              // 全局级别
-  private static Loggers: Map<LogCategory, Logger>;                 // 实例容器
+  private static MainLevel: JournalLevel;                              // 全局级别
+  private static Underlings: Map<string, JournalUnderling>;                 // 实例容器
   public static ColorOutputEnabled: boolean;                        // 彩色输出开关
-  public static readonly LevelColors: Record<LogLevel, string>;     // 颜色映射
+  public static readonly LevelColors: Record<JournalLevel, string>;     // 颜色映射
 
-  // 全局级别控制
-  public static SetMainLevel(level: LogLevel): void;
-  public static GetMainLevel(): LogLevel;
+  // 全局级别控制（公开成员）
+  public static MainLevel: JournalLevel;
+  public static SetMainLevel(level: JournalLevel): void;
+  public static GetMainLevel(): JournalLevel;
 
   // 分类级别控制
-  public static SetCategoryLevel(category: LogCategory, level: LogLevel): void;
+  public static SetCategoryLevel(category: JournalCategory, level: JournalLevel): void;
 
-  // 获取日志实例
-  public static Acquire(category: LogCategory): Logger;
+  // 获取记录专员实例
+  public static Acquire(category: JournalCategory): JournalUnderling;
 
   // 通用快捷方法（使用 SYSTEM 分类）
   public static Debug(title: string, ...data: unknown[]): void;
@@ -197,16 +198,16 @@ Journal.Info('英雄', heroName, '等级提升至', level);
 
 ### 使用自定义分类
 
-为不同模块使用独立的日志实例：
+为不同模块使用独立的记录专员实例：
 
 ```typescript
-import { Journal, LogCategory } from './squad/assistants/journal';
+import { Journal, JournalCategory } from './squad/assistants/journal';
 
-// 获取战斗日志实例
-const battleLog = Journal.Acquire(LogCategory.BATTLE);
+// 获取战斗记录专员
+const battleLog = Journal.Acquire(JournalCategory.BATTLE);
 
-// 获取 UI 日志实例
-const uiLog = Journal.Acquire(LogCategory.UI);
+// 获取 UI 记录专员
+const uiLog = Journal.Acquire(JournalCategory.UI);
 
 // 输出到不同分类
 battleLog.Info('战斗开始');
@@ -226,7 +227,7 @@ uiLog.Warn('按钮点击无效');
 
 ```typescript
 // 只显示 WARN 及以上
-Journal.SetMainLevel(LogLevel.WARN);
+Journal.MainLevel = JournalLevel.WARN;
 
 Journal.Debug('不会输出');
 Journal.Info('不会输出');
@@ -238,9 +239,9 @@ Journal.Error('会输出');
 
 ```typescript
 // 战斗日志只显示 ERROR 及以上
-Journal.SetCategoryLevel(LogCategory.BATTLE, LogLevel.ERROR);
+Journal.SetCategoryLevel(JournalCategory.BATTLE, JournalLevel.ERROR);
 
-const battleLog = Journal.Acquire(LogCategory.BATTLE);
+const battleLog = Journal.Acquire(JournalCategory.BATTLE);
 battleLog.Info('不会输出');
 battleLog.Error('会输出');
 ```
@@ -277,9 +278,9 @@ Journal.ColorOutputEnabled = false; // 禁用彩色
 
 ```typescript
 // ✅ 好的：为每个模块分配分类
-const battleLog = Journal.Acquire(LogCategory.BATTLE);
-const uiLog = Journal.Acquire(LogCategory.UI);
-const networkLog = Journal.Acquire(LogCategory.NETWORK);
+const battleLog = Journal.Acquire(JournalCategory.BATTLE);
+const uiLog = Journal.Acquire(JournalCategory.UI);
+const networkLog = Journal.Acquire(JournalCategory.NETWORK);
 
 // ❌ 坏的：所有日志都用 SYSTEM
 Journal.Info('战斗开始');
@@ -303,10 +304,10 @@ networkLog.Error('err');
 
 ```typescript
 // 开发环境
-Journal.SetMainLevel(LogLevel.DEBUG);
+Journal.MainLevel = JournalLevel.DEBUG;
 
 // 生产环境
-Journal.SetMainLevel(LogLevel.WARN);
+Journal.MainLevel = JournalLevel.WARN;
 ```
 
 ---
