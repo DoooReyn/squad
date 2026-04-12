@@ -18,7 +18,7 @@
 import { sys } from 'cc';
 
 import { ICrew } from './contracts/crew';
-import { DisciplinaryError, IDiscipline } from './contracts/discipline';
+import { DisciplinaryError, ErrorHandler, IDiscipline } from './contracts/discipline';
 
 /**
  * 风纪官
@@ -30,6 +30,11 @@ import { DisciplinaryError, IDiscipline } from './contracts/discipline';
  */
 class Discipline implements ICrew, IDiscipline {
   private _active: boolean;
+
+  /**
+   * 错误处理器（用于上报）
+   */
+  private _errorHandler: ErrorHandler | null;
 
   /**
    * 原始错误处理器（用于恢复）
@@ -47,6 +52,7 @@ class Discipline implements ICrew, IDiscipline {
    */
   public constructor() {
     this._active = false;
+    this._errorHandler = null;
     this._originalOnError = null;
     this._originalOnUnhandledRejection = null;
     this._originalNativeOnError = null;
@@ -170,12 +176,25 @@ class Discipline implements ICrew, IDiscipline {
   /**
    * 通知上报专员
    *
-   * 未来接入上报专员，负责将错误信息上报。
-   * TODO: 接入上报专员
+   * 将错误信息传递给错误处理器（如信标）。
    */
   private _notify(error: DisciplinaryError): void {
-    // TODO: 接入上报专员，负责错误上报
-    // 例如：reporter.report(error);
+    if (this._errorHandler) {
+      try {
+        this._errorHandler(error);
+      } catch {
+        // 处理器本身出错，忽略避免无限循环
+      }
+    }
+  }
+
+  /**
+   * 设置错误处理器
+   *
+   * @param handler - 错误处理函数（null 表示清除）
+   */
+  public setErrorHandler(handler: ErrorHandler | null): void {
+    this._errorHandler = handler;
   }
 }
 

@@ -21,8 +21,13 @@ export interface DisciplinaryError {
   /** 列号 */
   colno?: number;
   /** 原始错误对象 */
-  original: Error;
+  original: Error | null;
 }
+
+/**
+ * 错误处理函数
+ */
+export type ErrorHandler = (error: DisciplinaryError) => void;
 
 /**
  * 风纪官接口
@@ -33,5 +38,20 @@ export interface DisciplinaryError {
  * @description 技术实现：全局错误监听器
  */
 export interface IDiscipline {
-  // 接口为空，风纪官自动工作，无需外部调用
+  /**
+   * 设置错误处理器
+   *
+   * 设置一个回调函数，当捕获到错误时会被调用。
+   * 可以用于接入信标等上报伙伴。
+   *
+   * @param handler - 错误处理函数
+   *
+   * @example
+   * ```typescript
+   * discipline.setErrorHandler((error) => {
+   *   beacon.report({ type: 'error', data: error });
+   * });
+   * ```
+   */
+  setErrorHandler(handler: ErrorHandler | null): void;
 }

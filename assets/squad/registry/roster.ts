@@ -23,5 +23,11 @@ export const ROSTER = {
    */
   DISCIPLINE: 'Discipline',
 
+  /**
+   * 信标
+   * @description 数据上报专家，负责收集关键数据并上传服务器
+   */
+  BEACON: 'Beacon',
+
   // TODO: 添加更多伙伴
 } as const;

@@ -72,9 +72,7 @@ class Shadow implements ICrew, IShadow {
    *
    * 与记录官认识，开始情报工作。
    */
-  public async onLink(): Promise<void> {
-    Journal.Info(`${this.roster} 悄然加入队伍`);
-  }
+  public async onLink(): Promise<void> {}
 
   /**
    * 召唤分身
