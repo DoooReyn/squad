@@ -10,6 +10,12 @@
  * 所有伙伴（Crew）必须实现此接口，定义完整的生命周期。
  */
 export interface ICrew {
+  /** 花名 */
+  readonly roster: string;
+
+  /** 是否可用 */
+  get isActive(): boolean;
+
   /**
    * 建立羁绊后调用
    *

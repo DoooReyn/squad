@@ -12,10 +12,10 @@
  */
 export const ROSTER = {
   /**
-   * 事件伙伴
-   * @description 管理游戏内所有事件的发布与订阅
+   * 影子
+   * @description 斥候伙伴，负责情报的收集与传递
    */
-  EVENT_MANAGER: 'IEventManager',
+  SHADOW: 'Shadow',
 
   // TODO: 添加更多伙伴
 } as const;

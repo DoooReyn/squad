@@ -1,13 +1,14 @@
 /**
  * 启程
  *
- * 冒险团的出发点，所有伙伴（服务）的统一入队地点。
+ * 冒险团的出发点，所有伙伴（服务）的统一召集地点。
  * 在这里，我们按顺序召集伙伴，为冒险之旅做好准备。
  */
 
 import { sys } from 'cc';
 
 import { Journal } from './assistants/journal';
+import { Shadow } from './crews/shadow';
 import { ROSTER } from './registry/roster';
 import { Squad } from './squad';
 
@@ -17,18 +18,17 @@ import { Squad } from './squad';
  * 召集所有伙伴，准备冒险。
  * 注意：召集顺序很重要，被依赖的伙伴必须先召集！
  */
-export function embark(): void {
+export async function embark(): Promise<void> {
   Journal.ColorOutputEnabled = sys.isBrowser;
   Journal.Info('冒险启程，开始召集伙伴...');
 
-  // 第一阶段：基础伙伴
-  // TODO: 召集 EventManager
-  // Squad.Enlist(ROSTER.EVENT_MANAGER, new EventManager());
+  // 建立羁绊
+  Squad.Bind(ROSTER.SHADOW, Shadow);
 
-  // 第二阶段：依赖基础伙伴的其他成员
-  // TODO: 召集更多伙伴
+  // 编入队伍
+  await Squad.Link(ROSTER.SHADOW);
 
-  Journal.Info(`伙伴召集完毕！当前队员：${Squad.Size()} 人`);
+  Journal.Info(`伙伴召集完毕！当前伙伴：${Squad.Size()} 人`);
   Journal.Info('冒险开始！');
 }
 
