@@ -73,7 +73,7 @@ class Shadow implements ICrew, IShadow {
    * 与记录官认识，开始情报工作。
    */
   public async onLink(): Promise<void> {
-    Journal.Info('影子悄然加入队伍');
+    Journal.Info(`${this.roster} 悄然加入队伍`);
   }
 
   /**
@@ -86,8 +86,8 @@ class Shadow implements ICrew, IShadow {
    */
   public acquire(name: string): ShadowServant {
     if (!this._servants.has(name)) {
-      this._servants.set(name, new ShadowServant(name));
-      Journal.Debug(`[影子] 分身 ${name} 诞生`);
+      this._servants.set(name, new ShadowServant(this.roster, name));
+      Journal.Debug(`[${this.roster}] 分身 ${name} 诞生`);
     }
     return this._servants.get(name)!;
   }
@@ -101,7 +101,7 @@ class Shadow implements ICrew, IShadow {
    */
   public remove(name: string): void {
     if (this._servants.delete(name)) {
-      Journal.Debug(`[影子] 分身 ${name} 消散`);
+      Journal.Debug(`[${this.roster}] 分身 ${name} 消散`);
     }
   }
 
@@ -113,7 +113,7 @@ class Shadow implements ICrew, IShadow {
   public clear(): void {
     const count = this._servants.size;
     this._servants.clear();
-    Journal.Debug(`[影子] 清空所有分身 (共 ${count} 个)`);
+    Journal.Debug(`[${this.roster}] 清空所有分身 (共 ${count} 个)`);
   }
 
   /**

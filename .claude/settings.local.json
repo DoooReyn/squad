@@ -8,7 +8,9 @@
       "Bash(npx prettier:*)",
       "Bash(npx eslint:*)",
       "Bash(git merge:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)"
     ]
   }
 }

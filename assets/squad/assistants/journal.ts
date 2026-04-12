@@ -125,7 +125,8 @@ class JournalUnderling {
    * @param data 附加数据（可变参数）
    */
   private _outputToConsole(level: JournalLevel, title: string, ...data: unknown[]): void {
-    const timestamp = new Date().toLocaleTimeString();
+    const now = new Date();
+    const timestamp = `${now.toLocaleTimeString()}.${now.getMilliseconds().toString().padStart(3, '0')}`;
     const header = `[${this._category} | ${level} | ${timestamp}]`;
 
     // 检查是否应该使用彩色输出

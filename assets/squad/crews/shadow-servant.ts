@@ -15,6 +15,11 @@ import { IShadowServant, Listener, Reaction } from './contracts/shadow';
  */
 class ShadowServant implements IShadowServant {
   /**
+   * 主分身名字
+   */
+  private readonly _masterName: string;
+
+  /**
    * 分身名字
    */
   private readonly _name: string;
@@ -29,9 +34,11 @@ class ShadowServant implements IShadowServant {
 
   /**
    * 构造函数
+   * @param masterName 主分身名字
    * @param name 分身名字
    */
-  public constructor(name: string) {
+  public constructor(masterName: string, name: string) {
+    this._masterName = masterName;
     this._name = name;
     this._news = new Map();
   }
@@ -69,7 +76,7 @@ class ShadowServant implements IShadowServant {
     }
     this._news.get(news)!.add({ reaction, context });
 
-    Journal.Debug(`[影子·${this._name}] 潜伏监听: ${news}`);
+    Journal.Debug(`[${this._masterName}·${this._name}] 潜伏监听: ${news}`);
   }
 
   /**
@@ -88,12 +95,12 @@ class ShadowServant implements IShadowServant {
         try {
           listener.reaction(...args);
         } catch (error) {
-          Journal.Error(`[影子·${this._name}] 情报传递失败: ${news}`, error);
+          Journal.Error(`[${this._masterName}·${this._name}] 情报传递失败: ${news}`, error);
         }
       });
     }
 
-    Journal.Debug(`[影子·${this._name}] 报信传递: ${news}`, ...args);
+    Journal.Debug(`[${this._masterName}·${this._name}] 报信传递: ${news}`, ...args);
   }
 
   /**
@@ -121,7 +128,7 @@ class ShadowServant implements IShadowServant {
           }
         }
       }
-      Journal.Debug(`[影子·${this._name}] 抽身离开: ${news} (上下文: ${context})`);
+      Journal.Debug(`[${this._masterName}·${this._name}] 抽身离开: ${news} (上下文: ${context})`);
       return;
     }
 
@@ -139,7 +146,7 @@ class ShadowServant implements IShadowServant {
           this._news.delete(news);
         }
       }
-      Journal.Debug(`[影子·${this._name}] 抽身离开: ${news} (上下文: ${context})`);
+      Journal.Debug(`[${this._masterName}·${this._name}] 抽身离开: ${news} (上下文: ${context})`);
       return;
     }
 
@@ -156,7 +163,7 @@ class ShadowServant implements IShadowServant {
           this._news.delete(newsName);
         }
       }
-      Journal.Debug(`[影子·${this._name}] 抽身离开所有潜伏点 (上下文: ${context})`);
+      Journal.Debug(`[${this._masterName}·${this._name}] 抽身离开所有潜伏点 (上下文: ${context})`);
       return;
     }
 
@@ -175,7 +182,7 @@ class ShadowServant implements IShadowServant {
           }
         }
       }
-      Journal.Debug(`[影子·${this._name}] 抽身离开: ${news}`);
+      Journal.Debug(`[${this._masterName}·${this._name}] 抽身离开: ${news}`);
       return;
     }
 
@@ -183,14 +190,14 @@ class ShadowServant implements IShadowServant {
     // 移除指定消息的所有监听器
     if (news) {
       this._news.delete(news);
-      Journal.Debug(`[影子·${this._name}] 撤走潜伏点: ${news}`);
+      Journal.Debug(`[${this._masterName}·${this._name}] 撤走潜伏点: ${news}`);
       return;
     }
 
     // 情况6: 不指定参数
     // 清空所有监听器
     this._news.clear();
-    Journal.Debug(`[影子·${this._name}] 撤走所有潜伏点`);
+    Journal.Debug(`[${this._masterName}·${this._name}] 撤走所有潜伏点`);
   }
 }
 
