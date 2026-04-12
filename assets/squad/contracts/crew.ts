@@ -46,14 +46,14 @@ export interface ICrew {
    *
    * @example
    * ```typescript
-   * async OnLink(journal: Journal, eventManager: EventManager): Promise<void> {
+   * async onLink(journal: Journal, eventManager: EventManager): Promise<void> {
    *   this.journal = journal;
    *   this.eventManager = eventManager;
    *   await this.eventManager.on('battle-start', this.onBattleStart);
    * }
    * ```
    */
-  OnLink(...deps: unknown[]): Promise<void>;
+  onLink(...deps: unknown[]): Promise<void>;
 
   /**
    * 与伙伴分别时调用
@@ -67,12 +67,12 @@ export interface ICrew {
    *
    * @example
    * ```typescript
-   * OnUnlink(): void {
+   * onUnlink(): void {
    *   this.eventManager.off('battle-start', this.onBattleStart);
    *   this.journal = null;
    *   this.eventManager = null;
    * }
    * ```
    */
-  OnUnlink(): void;
+  onUnlink(): void;
 }
