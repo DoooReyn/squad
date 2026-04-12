@@ -8,6 +8,7 @@
 import { sys } from 'cc';
 
 import { Journal } from './assistants/journal';
+import { Discipline } from './crews/discipline';
 import { Shadow } from './crews/shadow';
 import { ROSTER } from './registry/roster';
 import { Squad } from './squad';
@@ -22,11 +23,17 @@ export async function embark(): Promise<void> {
   Journal.ColorOutputEnabled = sys.isBrowser;
   Journal.Info('冒险启程，开始召集伙伴...');
 
-  // 建立羁绊
+  // 第一阶段：基础伙伴
+  // 1. 建立羁绊
+  Squad.Bind(ROSTER.DISCIPLINE, Discipline);
   Squad.Bind(ROSTER.SHADOW, Shadow);
 
-  // 编入队伍
+  // 2. 编入队伍
+  await Squad.Link(ROSTER.DISCIPLINE);
   await Squad.Link(ROSTER.SHADOW);
+
+  // 第二阶段：依赖基础伙伴的其他成员
+  // TODO: 召集更多伙伴
 
   Journal.Info(`伙伴召集完毕！当前伙伴：${Squad.Size()} 人`);
   Journal.Info('冒险开始！');

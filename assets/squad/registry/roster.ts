@@ -17,5 +17,11 @@ export const ROSTER = {
    */
   SHADOW: 'Shadow',
 
+  /**
+   * 风纪官
+   * @description 纪律维护者，负责全局异常的捕获与分发
+   */
+  DISCIPLINE: 'Discipline',
+
   // TODO: 添加更多伙伴
 } as const;
