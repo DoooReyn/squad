@@ -115,10 +115,8 @@ result.match({
 ```typescript
 import { Navigator, Result } from '../assistants/navigator';
 
-// 包装可能抛出异常的函数
-const result = Navigator.Try(() => {
-  return JSON.parse(jsonString);
-});
+// 包装可能抛出异常的函数（直接传参）
+const result = Navigator.Try(JSON.parse, null, jsonString);
 
 // 检查结果
 if (result.isOk()) {
@@ -168,7 +166,7 @@ const heroName = maybeHero
 ### 链式调用
 
 ```typescript
-const result = Navigator.Try(() => JSON.parse(json))
+const result = Navigator.Try(JSON.parse, null, json)
   .andThen(data => validateHero(data))
   .map(hero => hero.name)
   .mapErr(error => new SquadViolationError('处理失败', 'PROCESS_FAILED', { original: error }));
@@ -205,6 +203,7 @@ function getHeroRequired(id: string): Result<Hero, SquadViolationError> {
 ```typescript
 import { SquadViolationError } from '../exceptions/squad-violation-error';
 
+// 示例1：复杂逻辑（使用箭头函数）
 function summonHero(id: string): Result<Hero, SquadViolationError> {
   return Navigator.SquadTry(() => {
     const hero = heroes.get(id);
@@ -219,6 +218,11 @@ function summonHero(id: string): Result<Hero, SquadViolationError> {
   });
 }
 
+// 示例2：直接传参（简单调用）
+function validateHero(id: string): Result<Hero, SquadViolationError> {
+  return Navigator.SquadTry(getHeroById, undefined, id);
+}
+
 // 使用
 const result = summonHero('hero-001');
 if (result.isErr()) {
@@ -229,15 +233,17 @@ if (result.isErr()) {
 ### 异步操作
 
 ```typescript
-const result = await Navigator.TryAsync(async () => {
-  const response = await fetch(url);
-  const data = await response.json();
-  return data;
-});
+// 使用 fetch API
+const result = await Navigator.TryAsync(fetch, null, url);
 
 result.match({
-  ok: (data) => console.log('获取成功:', data),
+  ok: (response) => console.log('获取成功:', response),
   err: (error) => console.error('获取失败:', error),
+});
+
+// 处理响应 JSON
+const jsonResult = await result.andThenAsync(async (response) => {
+  return await response.json();
 });
 ```
 
@@ -248,9 +254,9 @@ result.match({
 ### 1. 优先使用 Result/Option 而非 try-catch
 
 ```typescript
-// ✅ 推荐：使用 Result
+// ✅ 推荐：使用 Result（直接传参）
 function parseHero(json: string): Result<Hero, Error> {
-  return Navigator.Try(() => JSON.parse(json));
+  return Navigator.Try(JSON.parse, null, json);
 }
 
 // ❌ 不推荐：使用 try-catch
@@ -300,7 +306,7 @@ if (maybeHero.isSome()) {
 
 ```typescript
 // ✅ 推荐：链式调用
-const result = Navigator.Try(() => parse(json))
+const result = Navigator.Try(parse, null, json)
   .andThen(validate)
   .map(transform)
   .unwrapOr(null);
@@ -335,8 +341,8 @@ try {
 
 **之后：**
 ```typescript
-const result = Navigator.Try(() => JSON.parse(jsonString))
-  .andThen(data => Navigator.Try(() => processData(data)))
+const result = Navigator.Try(JSON.parse, null, jsonString)
+  .andThen(data => Navigator.Try(processData, null, data))
   .unwrapOr(null);
 
 result.match({
