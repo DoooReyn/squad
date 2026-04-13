@@ -27,25 +27,15 @@ import { DataCodec, DataSchema, ISteward } from './contracts/steward';
 /**
  * 默认 JSON 编解码器
  *
- * 使用 Navigator.Try 进行安全防护，避免编码/解码失败导致程序崩溃。
+ * 直接调用 JSON.stringify/parse，错误由上层 save/_loadFromStorage 处理。
  */
 class JsonCodec<T> implements DataCodec<T> {
   public encode(data: T): string {
-    return Navigator.Try(JSON.stringify, null, data).unwrapOr('{}');
+    return JSON.stringify(data);
   }
 
   public decode(raw: string): T {
-    const decoded = Navigator.Try(JSON.parse, null, raw).unwrapOr(null);
-
-    if (decoded === null) {
-      throw new SquadViolationError(
-        'JSON 解析失败：格式错误',
-        'STEWARD_DECODE_FAILED',
-        { raw }
-      );
-    }
-
-    return decoded as T;
+    return JSON.parse(raw) as T;
   }
 }
 
@@ -86,7 +76,7 @@ class Steward implements ICrew, ISteward {
   /**
    * 正在保存的数据集合（防止重复保存）
    */
-  private _saving: Set<string>;
+  private _savingKeys: Set<string>;
 
   /**
    * 统一自动保存定时器
@@ -112,9 +102,9 @@ class Steward implements ICrew, ISteward {
     this._proxies = new Map();
     this._codecs = new Map();
     this._defaultCodec = new JsonCodec();
-    this._saving = new Set();
-    this._saveTimer = null;
+    this._savingKeys = new Set();
     this._pendingSaveKeys = new Set();
+    this._saveTimer = null;
   }
 
   public get isActive(): boolean {
@@ -195,11 +185,7 @@ class Steward implements ICrew, ISteward {
     if (!proxy) {
       const data = this._data.get(key);
       if (!data) {
-        throw new SquadViolationError(
-          `数据模板未注册: ${key}`,
-          'STEWARD_SCHEMA_NOT_REGISTERED',
-          { key }
-        );
+        throw new SquadViolationError(`数据模板未注册: ${key}`, 'STEWARD_SCHEMA_NOT_REGISTERED', { key });
       }
 
       // 创建 Proxy
@@ -217,13 +203,13 @@ class Steward implements ICrew, ISteward {
    */
   public async save(key: string): Promise<void> {
     // 防止重复保存
-    if (this._saving.has(key)) {
+    if (this._savingKeys.has(key)) {
       return;
     }
 
-    this._saving.add(key);
+    this._savingKeys.add(key);
 
-    try {
+    const result = Navigator.Try(() => {
       const schema = this._schemas.get(key);
       const data = this._data.get(key);
 
@@ -242,11 +228,14 @@ class Steward implements ICrew, ISteward {
       sys.localStorage.setItem(key, encoded);
 
       Journal.Debug(`[管家] 数据已保存: ${key}`);
-    } catch (error) {
-      Journal.Error(`[管家] 保存失败: ${key}`, error);
-    } finally {
-      this._saving.delete(key);
-    }
+    });
+
+    result.match({
+      ok: () => {},
+      err: (error) => Journal.Error(`[管家] 保存失败: ${key}`, error),
+    });
+
+    this._savingKeys.delete(key);
   }
 
   /**
