@@ -1,0 +1,6 @@
+{
+  "imports": {
+    "@squad/": "./assets/squad/",
+    "@adventure/": "./assets/adventure/"
+  }
+}

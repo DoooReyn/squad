@@ -24,6 +24,9 @@
     // 强制文件名大小写一致（跨平台重要）
     "forceConsistentCasingInFileNames": true,
     // 路径别名
-    "paths": {}
+    "paths": {
+      "@adventure/*": ["./assets/adventure/*"],
+      "@squad/*": ["./assets/squad/*"],
+    }
   }
 }

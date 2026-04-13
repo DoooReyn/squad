@@ -19,7 +19,7 @@
 import { game, Game } from 'cc';
 import { EDITOR } from 'cc/env';
 
-import { embark } from '../squad/embark';
+import { embark } from '@squad/embark';
 
 if (!EDITOR) {
   /**
