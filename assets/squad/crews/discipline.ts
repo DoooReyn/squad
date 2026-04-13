@@ -17,6 +17,7 @@
 
 import { sys } from 'cc';
 
+import { Navigator } from '../assistants/navigator';
 import { ICrew } from './contracts/crew';
 import { DisciplinaryError, ErrorHandler, IDiscipline } from './contracts/discipline';
 
@@ -180,11 +181,7 @@ class Discipline implements ICrew, IDiscipline {
    */
   private _notify(error: DisciplinaryError): void {
     if (this._errorHandler) {
-      try {
-        this._errorHandler(error);
-      } catch {
-        // 处理器本身出错，忽略避免无限循环
-      }
+      Navigator.Try(this._errorHandler, undefined, error);
     }
   }
 

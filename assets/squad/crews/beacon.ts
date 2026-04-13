@@ -18,6 +18,7 @@
 
 import { sys } from 'cc';
 
+import { Navigator } from '../assistants/navigator';
 import { IBeacon, ReportData } from './contracts/beacon';
 import { ICrew } from './contracts/crew';
 
@@ -243,31 +244,46 @@ class Beacon implements ICrew, IBeacon {
     // 取出队列中的所有数据
     const data = this._queue.splice(0, this._queue.length);
 
-    try {
-      await this._sendWithRetry(data);
-    } catch (error) {
+    const result = await Navigator.TryAsync(this._sendWithRetry, this, data);
+
+    if (result.isErr()) {
       // 上报失败，数据放回队列
       this._queue.unshift(...data);
-    } finally {
-      this._isReporting = false;
     }
+
+    this._isReporting = false;
   }
 
   /**
    * 带重试的发送
    */
   private async _sendWithRetry(data: ReportData[], attempt = 1): Promise<void> {
-    try {
-      await this._send(data);
-    } catch (error) {
-      if (attempt < this._config.retries) {
-        // 指数退避
-        const delay = Math.pow(2, attempt) * 1000;
-        await new Promise((resolve) => setTimeout(resolve, delay));
-        return this._sendWithRetry(data, attempt + 1);
-      }
-      throw error;
+    const result = await Navigator.TryAsync(this._send, this, data);
+
+    // 成功，直接返回
+    if (result.isOk()) {
+      return;
     }
+
+    // 失败，获取错误
+    const error = result.match({
+      ok: () => {
+        // 不会执行到这里
+        return new Error('Unexpected');
+      },
+      err: (e) => e,
+    });
+
+    // 检查是否需要重试
+    if (attempt < this._config.retries) {
+      // 指数退避
+      const delay = Math.pow(2, attempt) * 1000;
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return this._sendWithRetry(data, attempt + 1);
+    }
+
+    // 重试次数用尽，抛出错误
+    throw error;
   }
 
   /**

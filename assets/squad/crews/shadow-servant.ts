@@ -6,6 +6,7 @@
  */
 
 import { Journal } from '../assistants/journal';
+import { Navigator } from '../assistants/navigator';
 import { IShadowServant, Listener, Reaction } from './contracts/shadow';
 
 /**
@@ -92,11 +93,11 @@ class ShadowServant implements IShadowServant {
     const handlers = this._news.get(news);
     if (handlers) {
       handlers.forEach((listener) => {
-        try {
-          listener.reaction(...args);
-        } catch (error) {
-          Journal.Error(`[${this._masterName}·${this._name}] 情报传递失败: ${news}`, error);
-        }
+        Navigator.Try(listener.reaction, undefined, ...args).match({
+          ok: () => {},
+          err: (error) =>
+            Journal.Error(`[${this._masterName}·${this._name}] 情报传递失败: ${news}`, error),
+        });
       });
     }
 
