@@ -26,14 +26,26 @@ import { DataCodec, DataSchema, ISteward } from './contracts/steward';
 
 /**
  * 默认 JSON 编解码器
+ *
+ * 使用 Navigator.Try 进行安全防护，避免编码/解码失败导致程序崩溃。
  */
 class JsonCodec<T> implements DataCodec<T> {
   public encode(data: T): string {
-    return JSON.stringify(data);
+    return Navigator.Try(JSON.stringify, null, data).unwrapOr('{}');
   }
 
   public decode(raw: string): T {
-    return JSON.parse(raw) as T;
+    const decoded = Navigator.Try(JSON.parse, null, raw).unwrapOr(null);
+
+    if (decoded === null) {
+      throw new SquadViolationError(
+        'JSON 解析失败：格式错误',
+        'STEWARD_DECODE_FAILED',
+        { raw }
+      );
+    }
+
+    return decoded as T;
   }
 }
 
