@@ -354,12 +354,16 @@ class Steward implements ICrew, ISteward {
     for (let v = currentVersion; v < schema.version; v++) {
       const migrate = schema.migrations?.[v];
       if (migrate) {
-        try {
-          data = migrate(data);
-          Journal.Debug(`[管家] 迁移数据: ${schema.key} v${v} -> v${v + 1}`);
-        } catch (error) {
-          Journal.Error(`[管家] 迁移失败: ${schema.key} v${v} -> v${v + 1}`, error);
-        }
+        const result = Navigator.Try(migrate, undefined, data);
+        result.match({
+          ok: (migrated) => {
+            data = migrated;
+            Journal.Debug(`[管家] 迁移数据: ${schema.key} v${v} -> v${v + 1}`);
+          },
+          err: (error) => {
+            Journal.Error(`[管家] 迁移失败: ${schema.key} v${v} -> v${v + 1}`, error);
+          },
+        });
       }
     }
 
