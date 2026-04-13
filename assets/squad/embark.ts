@@ -13,6 +13,7 @@ import { IBeacon } from './crews/contracts/beacon';
 import { IDiscipline } from './crews/contracts/discipline';
 import { Discipline } from './crews/discipline';
 import { Shadow } from './crews/shadow';
+import { Steward } from './crews/steward';
 import { ROSTER } from './registry/roster';
 import { Squad } from './squad';
 
@@ -28,14 +29,16 @@ export async function embark(): Promise<void> {
 
   // 第一阶段：基础伙伴
   // 1. 建立羁绊
+  Squad.Bind(ROSTER.SHADOW, Shadow);
   Squad.Bind(ROSTER.DISCIPLINE, Discipline);
   Squad.Bind(ROSTER.BEACON, Beacon);
-  Squad.Bind(ROSTER.SHADOW, Shadow);
+  Squad.Bind(ROSTER.STEWARD, Steward);
 
   // 2. 编入队伍
+  await Squad.Link(ROSTER.SHADOW);
   await Squad.Link(ROSTER.DISCIPLINE);
   await Squad.Link(ROSTER.BEACON);
-  await Squad.Link(ROSTER.SHADOW);
+  await Squad.Link(ROSTER.STEWARD);
 
   // 3. 伙伴协作
   // 3.1 风纪官与信标连接，风纪官捕获的错误交给信标上报

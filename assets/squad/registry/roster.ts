@@ -29,5 +29,9 @@ export const ROSTER = {
    */
   BEACON: 'Beacon',
 
-  // TODO: 添加更多伙伴
+  /**
+   * 管家
+   * @description 存储管理专家，负责游戏数据的持久化存储
+   */
+  STEWARD: 'Steward',
 } as const;
