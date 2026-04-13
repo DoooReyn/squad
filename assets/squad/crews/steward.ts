@@ -89,9 +89,14 @@ class Steward implements ICrew, ISteward {
   private _saving: Set<string>;
 
   /**
-   * 自动保存定时器映射表
+   * 统一自动保存定时器
    */
-  private _saveTimers: Map<string, number>;
+  private _saveTimer: number | null;
+
+  /**
+   * 待保存的键名集合
+   */
+  private _pendingSaveKeys: Set<string>;
 
   declare public readonly roster: string;
 
@@ -108,7 +113,8 @@ class Steward implements ICrew, ISteward {
     this._codecs = new Map();
     this._defaultCodec = new JsonCodec();
     this._saving = new Set();
-    this._saveTimers = new Map();
+    this._saveTimer = null;
+    this._pendingSaveKeys = new Set();
   }
 
   public get isActive(): boolean {
@@ -148,10 +154,11 @@ class Steward implements ICrew, ISteward {
     this.saveAll();
 
     // 清理定时器
-    for (const timer of this._saveTimers.values()) {
-      clearTimeout(timer);
+    if (this._saveTimer !== null) {
+      clearTimeout(this._saveTimer);
+      this._saveTimer = null;
     }
-    this._saveTimers.clear();
+    this._pendingSaveKeys.clear();
 
     this._active = false;
   }
@@ -407,21 +414,36 @@ class Steward implements ICrew, ISteward {
   /**
    * 调度自动保存（防抖）
    *
+   * 使用单一全局定时器，批量保存所有待保存的数据。
+   *
    * @param key - 存储键名
    */
   private _scheduleAutoSave(key: string): void {
-    // 清除之前的定时器
-    const existingTimer = this._saveTimers.get(key);
-    if (existingTimer !== undefined) {
-      clearTimeout(existingTimer);
+    // 添加到待保存集合
+    this._pendingSaveKeys.add(key);
+
+    // 如果定时器不存在，创建新的
+    if (this._saveTimer === null) {
+      this._saveTimer = window.setTimeout(() => {
+        this._flushPendingSaves();
+      }, 100);
     }
+  }
 
-    // 防抖：100ms 后保存
-    const timer = window.setTimeout(() => {
+  /**
+   * 刷新待保存的数据
+   *
+   * 批量保存所有待保存的数据。
+   */
+  private _flushPendingSaves(): void {
+    const keys = Array.from(this._pendingSaveKeys);
+    this._pendingSaveKeys.clear();
+    this._saveTimer = null;
+
+    // 批量保存
+    for (const key of keys) {
       this.save(key);
-    }, 100);
-
-    this._saveTimers.set(key, timer);
+    }
   }
 }
 
