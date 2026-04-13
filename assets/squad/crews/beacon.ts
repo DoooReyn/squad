@@ -16,6 +16,8 @@
  * - 默默奉献，不可或缺
  */
 
+import { sys } from 'cc';
+
 import { IBeacon, ReportData } from './contracts/beacon';
 import { ICrew } from './contracts/crew';
 
@@ -28,6 +30,11 @@ interface BeaconConfigInternal {
   interval: number;
   retries: number;
   enabled: boolean;
+}
+
+interface ReportDataExtra extends ReportData {
+  platform: string;
+  os: string;
 }
 
 /**
@@ -135,9 +142,11 @@ class Beacon implements ICrew, IBeacon {
     }
 
     // 添加时间戳
-    const reportData: ReportData = {
+    const reportData: ReportDataExtra = {
       ...data,
       timestamp: data.timestamp || Date.now(),
+      platform: sys.platform,
+      os: sys.os,
     };
 
     // 入队
