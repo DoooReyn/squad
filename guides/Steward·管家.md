@@ -150,28 +150,48 @@ steward.register(playerSchema);
 const player = steward.get<PlayerData>('player-data');
 ```
 
-### 自定义编解码器
+### 添加编解码器
 
 ```typescript
-// Base64 编解码器
-class Base64Codec<T> implements DataCodec<T> {
-  encode(data: T): string {
-    const json = JSON.stringify(data);
-    return btoa(json);
-  }
+import { adaptCodec, Base64Codec, XorCodec } from '../squad/assistants/codec';
 
-  decode(raw: string): T {
-    const json = atob(raw);
-    return JSON.parse(json) as T;
-  }
-}
+// 添加编解码器到全局链
+steward.addCodecs(
+  adaptCodec(Base64Codec.encode, Base64Codec.decode),
+  new XorCodec('my-secret-key')
+);
 
-// 为特定数据设置编解码器
-steward.setCodec('sensitive-data', new Base64Codec());
-
-// 或设置全局默认编解码器
-steward.setDefaultCodec(new Base64Codec());
+// 数据存储时会自动经过：JSON -> Base64 -> XOR
 ```
+
+### 链式编解码器
+
+```typescript
+import { chainCodecs, adaptCodec, JsonCodec, Base64Codec } from '../squad/assistants/codec';
+import { XorCodec } from '../squad/assistants/codec';
+
+// 组合多个编解码器：JSON -> Base64 -> XOR
+const codec = chainCodecs<PlayerData>(
+  adaptCodec(JsonCodec.encode, JsonCodec.decode),
+  adaptCodec(Base64Codec.encode, Base64Codec.decode),
+  new XorCodec('secret-key')
+);
+
+// 编码流程：PlayerData -> JSON -> Base64 -> XOR
+// 解码流程：XOR -> Base64 -> JSON -> PlayerData
+
+steward.addCodecs(
+  adaptCodec(Base64Codec.encode, Base64Codec.decode),
+  new XorCodec('secret-key')
+);
+```
+
+**应用场景：**
+- **数据加密**：JSON -> Base64 -> XOR
+- **数据混淆**：JSON -> XOR -> Base64
+- **多重保护**：组合多个编解码器
+
+详见 [Codec·破译官](./Codec·破译官.md)。
 
 ### 手动保存
 
@@ -337,8 +357,7 @@ const proxy = new Proxy(data, {
 | `get<T>(key)` | 获取数据（返回代理对象） |
 | `save(key)` | 手动保存指定数据 |
 | `saveAll()` | 保存所有数据 |
-| `setCodec(key, codec)` | 设置编解码器 |
-| `setDefaultCodec(codec)` | 设置默认编解码器 |
+| `addCodecs(...codecs)` | 添加编解码器到全局链 |
 | `has(key)` | 检查数据是否存在 |
 | `delete(key)` | 删除指定数据 |
 | `clear()` | 清空所有数据 |

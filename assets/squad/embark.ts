@@ -29,15 +29,15 @@ export async function embark(): Promise<void> {
 
   // 第一阶段：基础伙伴
   // 1. 建立羁绊
-  Squad.Bind(ROSTER.SHADOW, Shadow);
   Squad.Bind(ROSTER.DISCIPLINE, Discipline);
   Squad.Bind(ROSTER.BEACON, Beacon);
+  Squad.Bind(ROSTER.SHADOW, Shadow);
   Squad.Bind(ROSTER.STEWARD, Steward);
 
   // 2. 编入队伍
-  await Squad.Link(ROSTER.SHADOW);
   await Squad.Link(ROSTER.DISCIPLINE);
   await Squad.Link(ROSTER.BEACON);
+  await Squad.Link(ROSTER.SHADOW);
   await Squad.Link(ROSTER.STEWARD);
 
   // 3. 伙伴协作

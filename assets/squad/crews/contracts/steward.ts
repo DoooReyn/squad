@@ -4,6 +4,8 @@
  * 定义管家伙伴的数据存储接口。
  */
 
+import { DataCodec } from '../../assistants/codec/codecs';
+
 /**
  * 数据模板
  *
@@ -18,18 +20,6 @@ export interface DataSchema<T> {
   defaults: () => T;
   /** 迁移映射表：版本号 -> 迁移函数 */
   migrations?: Record<number, (old: unknown) => T>;
-}
-
-/**
- * 编解码器
- *
- * 定义数据的编码和解码方式。
- */
-export interface DataCodec<T> {
-  /** 将数据编码为字符串 */
-  encode(data: T): string;
-  /** 将字符串解码为数据 */
-  decode(raw: string): T;
 }
 
 /**
@@ -107,34 +97,22 @@ export interface ISteward {
   saveAll(): Promise<void>;
 
   /**
-   * 设置指定数据的编解码器
+   * 添加编解码器到链中
    *
-   * 为特定数据设置自定义编解码器。
+   * 将编解码器追加到全局编解码器链的末尾。
    *
-   * @param key - 存储键名
-   * @param codec - 编解码器
-   *
-   * @example
-   * ```typescript
-   * steward.setCodec('player-progress', new Base64Codec());
-   * ```
-   */
-  setCodec<T>(key: string, codec: DataCodec<T>): void;
-
-  /**
-   * 设置全局默认编解码器
-   *
-   * 为所有没有设置特定编解码器的数据使用此编解码器。
-   * 默认使用 JSON 编解码器。
-   *
-   * @param codec - 编解码器
+   * @param codecs - 编解码器（可变参数）
    *
    * @example
    * ```typescript
-   * steward.setDefaultCodec(new JsonCodec());
+   * // 添加 Base64 编解码器
+   * steward.addCodecs(new Base64Codec());
+   *
+   * // 添加多个编解码器
+   * steward.addCodecs(new Base64Codec(), new ZlibCodec());
    * ```
    */
-  setDefaultCodec(codec: DataCodec<any>): void;
+  addCodecs(...codecs: DataCodec<any>[]): void;
 
   /**
    * 检查数据是否存在

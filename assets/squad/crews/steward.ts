@@ -18,26 +18,12 @@
 
 import { sys } from 'cc';
 
+import { chainCodecs, DataCodec, JsonCodec } from '../assistants/codec/codecs';
 import { Journal } from '../assistants/journal';
 import { Navigator } from '../assistants/navigator';
 import { SquadViolationError } from '../exceptions/squad-violation-error';
 import { ICrew } from './contracts/crew';
-import { DataCodec, DataSchema, ISteward } from './contracts/steward';
-
-/**
- * 默认 JSON 编解码器
- *
- * 直接调用 JSON.stringify/parse，错误由上层 save/_loadFromStorage 处理。
- */
-class JsonCodec<T> implements DataCodec<T> {
-  public encode(data: T): string {
-    return JSON.stringify(data);
-  }
-
-  public decode(raw: string): T {
-    return JSON.parse(raw) as T;
-  }
-}
+import { DataSchema, ISteward } from './contracts/steward';
 
 /**
  * 管家
@@ -64,14 +50,18 @@ class Steward implements ICrew, ISteward {
   private _proxies: Map<string, any>;
 
   /**
-   * 编解码器映射表
+   * 编解码器链
+   *
+   * 所有数据共享同一个编解码器链，按顺序执行。
    */
-  private _codecs: Map<string, DataCodec<any>>;
+  private _codecs: DataCodec<any>[];
 
   /**
-   * 默认编解码器
+   * 固化的编解码器链
+   *
+   * 在构造函数和 addCodecs 时创建，避免重复实例化。
    */
-  private _defaultCodec: DataCodec<any>;
+  private _chainedCodec: DataCodec<any>;
 
   /**
    * 正在保存的数据集合（防止重复保存）
@@ -100,8 +90,8 @@ class Steward implements ICrew, ISteward {
     this._schemas = new Map();
     this._data = new Map();
     this._proxies = new Map();
-    this._codecs = new Map();
-    this._defaultCodec = new JsonCodec();
+    this._codecs = [JsonCodec];
+    this._chainedCodec = this._codecs[0];
     this._savingKeys = new Set();
     this._pendingSaveKeys = new Set();
     this._saveTimer = null;
@@ -220,9 +210,8 @@ class Steward implements ICrew, ISteward {
       // 添加版本号
       const toSave = { ...data, _version: schema.version };
 
-      // 编码
-      const codec = this._codecs.get(key) || this._defaultCodec;
-      const encoded = codec.encode(toSave);
+      // 使用固化的编解码器链编码
+      const encoded = this._chainedCodec.encode(toSave);
 
       // 保存到 localStorage
       sys.localStorage.setItem(key, encoded);
@@ -247,24 +236,25 @@ class Steward implements ICrew, ISteward {
   }
 
   /**
-   * 设置指定数据的编解码器
+   * 添加编解码器到链中
    *
-   * @param key - 存储键名
-   * @param codec - 编解码器
-   */
-  public setCodec<T>(key: string, codec: DataCodec<T>): void {
-    this._codecs.set(key, codec);
-    Journal.Debug(`[管家] 设置编解码器: ${key}`);
-  }
-
-  /**
-   * 设置全局默认编解码器
+   * 将编解码器追加到全局编解码器链的末尾。
    *
-   * @param codec - 编解码器
+   * @param codecs - 编解码器（可变参数）
+   *
+   * @example
+   * ```typescript
+   * // 添加 Base64 编解码器
+   * steward.addCodecs(new Base64Codec());
+   *
+   * // 添加多个编解码器
+   * steward.addCodecs(new Base64Codec(), new ZlibCodec());
+   * ```
    */
-  public setDefaultCodec(codec: DataCodec<any>): void {
-    this._defaultCodec = codec;
-    Journal.Debug('[管家] 设置默认编解码器');
+  public addCodecs(...codecs: DataCodec<any>[]): void {
+    this._codecs.push(...codecs);
+    this._chainedCodec = chainCodecs(...this._codecs);
+    Journal.Debug(`[管家] 添加编解码器，当前链长度: ${this._codecs.length}`);
   }
 
   /**
@@ -290,7 +280,6 @@ class Steward implements ICrew, ISteward {
     this._schemas.delete(key);
     this._data.delete(key);
     this._proxies.delete(key);
-    this._codecs.delete(key);
 
     Journal.Debug(`[管家] 数据已删除: ${key}`);
   }
@@ -308,7 +297,6 @@ class Steward implements ICrew, ISteward {
     this._schemas.clear();
     this._data.clear();
     this._proxies.clear();
-    this._codecs.clear();
 
     Journal.Debug('[管家] 所有数据已清空');
   }
@@ -328,15 +316,17 @@ class Steward implements ICrew, ISteward {
     }
 
     return Navigator.Try(() => {
-      const stored = JSON.parse(raw);
-      const storedVersion = (stored as any)._version || 1;
+      // 使用固化的编解码器链解码
+      const decoded = this._chainedCodec.decode(raw);
+
+      const storedVersion = (decoded as any)._version || 1;
 
       if (storedVersion < schema.version) {
         // 需要迁移
-        return this._migrate(stored, schema);
+        return this._migrate(decoded, schema);
       }
 
-      return stored;
+      return decoded;
     }).unwrapOr(schema.defaults());
   }
 
